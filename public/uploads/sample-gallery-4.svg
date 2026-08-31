@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <rect width="800" height="800" fill="#ede9fe"/>
+  <!-- stack of books -->
+  <rect x="220" y="500" width="360" height="60" rx="8" fill="#7c3aed"/>
+  <rect x="250" y="440" width="320" height="60" rx="8" fill="#8b5cf6"/>
+  <rect x="200" y="380" width="340" height="60" rx="8" fill="#a78bfa"/>
+  <rect x="260" y="320" width="280" height="60" rx="8" fill="#c4b5fd"/>
+  <!-- pencil -->
+  <g transform="translate(430,300) rotate(-35)">
+    <rect x="-14" y="0" width="28" height="160" fill="#fbbf24"/>
+    <polygon points="-14,0 14,0 0,-40" fill="#facc15"/>
+    <rect x="-14" y="150" width="28" height="20" fill="#78350f"/>
+  </g>
+  <text x="30" y="770" font-family="Arial, sans-serif" font-size="20" fill="#4c1d95" opacity="0.55">SAMPLE IMAGE</text>
+</svg>

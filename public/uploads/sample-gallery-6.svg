@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <rect width="800" height="800" fill="#dcfce7"/>
+  <!-- food basket -->
+  <path d="M240,420 L560,420 L520,600 L280,600 Z" fill="#a16207"/>
+  <path d="M240,420 L560,420 L548,460 L252,460 Z" fill="#ca8a04"/>
+  <path d="M320,420 C320,350 480,350 480,420" fill="none" stroke="#78350f" stroke-width="16"/>
+  <!-- produce -->
+  <circle cx="330" cy="400" r="34" fill="#dc2626"/>
+  <circle cx="400" cy="385" r="38" fill="#16a34a"/>
+  <circle cx="470" cy="400" r="34" fill="#f59e0b"/>
+  <rect x="355" y="360" width="60" height="20" rx="8" fill="#facc15"/>
+  <text x="30" y="770" font-family="Arial, sans-serif" font-size="20" fill="#14532d" opacity="0.55">SAMPLE IMAGE</text>
+</svg>

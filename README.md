@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Khidmat
 
-## Getting Started
+Charity website built with Next.js, Prisma, and SQLite.
 
-First, run the development server:
+## What's here
+
+- **Public site** (`/`) — hero, about, causes, gallery, testimonials, contact, and a **Donate Now** button that opens a modal with the contact number, WhatsApp link, and donation QR code. Visitors can optionally leave their name/amount so the donation gets logged as a pending record.
+- **Admin panel** (`/admin`) — manage all site content and images (hero/about text, logo, QR code, contact details, social links), causes, gallery photos, and testimonials.
+- **Donation tracking** (`/admin/donations`) — every website donation intent is recorded automatically (status `PENDING`); admins can also add manual/offline donations (cash, bank transfer, etc.), mark records Confirmed/Pending/Cancelled, search/filter, and export to CSV.
+
+## Getting started
 
 ```bash
+npm install
+npx prisma migrate dev   # creates the SQLite database
+npm run db:seed          # creates the first admin account + default content
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) for the site, and [http://localhost:3000/admin](http://localhost:3000/admin/login) for the admin panel.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Admin login
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The seed script creates one admin account from these `.env` values (defaults shown — **change them**):
 
-## Learn More
+```
+ADMIN_EMAIL="admin@khidmat.org"
+ADMIN_PASSWORD="ChangeMe123!"
+```
 
-To learn more about Next.js, take a look at the following resources:
+Also set `SESSION_SECRET` in `.env` to a long random string before deploying — it signs the admin session cookie.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Images uploaded from the admin panel are stored under `public/uploads/`. On a serverless host (e.g. Vercel) this storage does not persist across deploys — swap in an object storage provider (S3, Cloudflare R2, etc.) for production use. It works as-is on any regular Node.js server/VM.
+- The donation flow doesn't process payments online — donors pay via the QR code or by calling/messaging the number shown, and staff confirm the donation from the admin panel. This matches a manual/offline collection process; a payment gateway (Razorpay, Stripe, etc.) can be added later if online payments are needed.
+- Database: SQLite file at `prisma/dev.db` (gitignored). For production, point `DATABASE_URL` at a hosted database and rerun `prisma migrate deploy`.

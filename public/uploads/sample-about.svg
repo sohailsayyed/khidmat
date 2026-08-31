@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="700" viewBox="0 0 900 700">
+  <defs>
+    <linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ccfbf1"/>
+      <stop offset="100%" stop-color="#f0fdfa"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="700" fill="url(#skyg)"/>
+  <circle cx="770" cy="120" r="70" fill="#fde68a" opacity="0.8"/>
+
+  <!-- ground -->
+  <rect x="0" y="560" width="900" height="140" fill="#0f766e" opacity="0.12"/>
+
+  <!-- simple house -->
+  <g transform="translate(560,340)">
+    <rect x="-90" y="60" width="220" height="160" rx="10" fill="#0f766e"/>
+    <polygon points="-110,60 20,-60 150,60" fill="#134e4a"/>
+    <rect x="-20" y="140" width="60" height="80" fill="#f0fdfa"/>
+    <rect x="60" y="100" width="40" height="40" fill="#f0fdfa" opacity="0.9"/>
+    <rect x="-70" y="100" width="40" height="40" fill="#f0fdfa" opacity="0.9"/>
+  </g>
+
+  <!-- people silhouettes holding hands -->
+  <g fill="#f59e0b">
+    <circle cx="180" cy="430" r="34"/>
+    <rect x="150" y="466" width="60" height="110" rx="24"/>
+  </g>
+  <g fill="#0d9488">
+    <circle cx="280" cy="400" r="44"/>
+    <rect x="240" y="446" width="80" height="140" rx="30"/>
+  </g>
+  <g fill="#f59e0b">
+    <circle cx="390" cy="430" r="34"/>
+    <rect x="360" y="466" width="60" height="110" rx="24"/>
+  </g>
+
+  <!-- heart above the group -->
+  <path d="M285,300 C260,275 220,282 210,315 C200,345 230,370 285,405 C340,370 370,345 360,315 C350,282 310,275 285,300 Z"
+        fill="#e11d48" opacity="0.85"/>
+
+  <text x="60" y="60" font-family="Arial, sans-serif" font-size="20" fill="#134e4a" opacity="0.6" letter-spacing="1.5">SAMPLE IMAGE — replace from the admin panel</text>
+</svg>

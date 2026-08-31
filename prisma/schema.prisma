@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+// Singleton row (id always "main") holding editable site-wide content.
+model SiteSettings {
+  id              String   @id @default("main")
+  siteName        String   @default("Khidmat")
+  tagline         String   @default("Serving humanity, one act of kindness at a time")
+  heroTitle       String   @default("Together We Can Change Lives")
+  heroSubtitle    String   @default("Khidmat connects generous hearts with people who need help the most. Join us in our mission.")
+  heroImageUrl    String   @default("/uploads/sample-hero.svg")
+  logoUrl         String   @default("")
+  aboutTitle      String   @default("About Khidmat")
+  aboutText       String   @default("Khidmat is a community-driven charity dedicated to providing food, education, healthcare, and shelter to those in need. Every contribution, big or small, helps us reach more people.")
+  aboutImageUrl   String   @default("/uploads/sample-about.svg")
+  contactNumber   String   @default("+91 90000 00000")
+  contactEmail    String   @default("contact@khidmat.org")
+  contactAddress  String   @default("Pune, Maharashtra, India")
+  qrImageUrl      String   @default("/uploads/placeholder-qr.png")
+  donateNote      String   @default("Scan the QR code or call us to donate. Every contribution is deeply appreciated.")
+  facebookUrl     String   @default("")
+  instagramUrl    String   @default("")
+  twitterUrl      String   @default("")
+  whatsappNumber  String   @default("")
+  updatedAt       DateTime @updatedAt
+}
+
+model Cause {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  imageUrl    String   @default("/uploads/placeholder-cause.svg")
+  raisedLabel String   @default("")
+  goalLabel   String   @default("")
+  order       Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GalleryImage {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  caption   String   @default("")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  role      String   @default("")
+  message   String
+  imageUrl  String   @default("")
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+enum DonationSource {
+  WEBSITE
+  MANUAL
+}
+
+enum DonationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model Donation {
+  id          String         @id @default(cuid())
+  donorName   String
+  donorPhone  String         @default("")
+  donorEmail  String         @default("")
+  amount      Float
+  source      DonationSource
+  status      DonationStatus @default(PENDING)
+  method      String         @default("")
+  note        String         @default("")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}

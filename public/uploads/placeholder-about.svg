@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="700" viewBox="0 0 900 700">
+  <rect width="900" height="700" fill="#e7e5e4"/>
+  <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="30" fill="#78716c" text-anchor="middle">About Image</text>
+  <text x="50%" y="57%" font-family="Arial, sans-serif" font-size="16" fill="#a8a29e" text-anchor="middle">Replace from admin panel</text>
+</svg>

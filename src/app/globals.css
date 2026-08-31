@@ -2,7 +2,8 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1c1917;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -12,15 +13,26 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* This site only ships a light theme. Forcing color-scheme: light keeps native
+   form controls (inputs, selects) readable even when the OS/browser is in
+   dark mode, instead of picking up a dark UA style with invisible text. */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+input,
+textarea,
+select {
+  color-scheme: light;
+  background-color: #ffffff;
+  color: #1c1917;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #a8a29e;
 }
