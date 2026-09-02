@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
 const MAX_ROWS = 5000;
 
@@ -21,6 +22,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
   const body = await req.json().catch(() => null);
   const parsed = bodySchema.safeParse(body);
 
@@ -46,6 +50,7 @@ export async function POST(req: NextRequest) {
       status: r.status,
       method: r.method,
       note: r.note,
+      createdBy: auth.session.name,
       ...(createdAt ? { createdAt } : {}),
     };
   });

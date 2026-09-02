@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
@@ -24,6 +25,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
   const body = await req.json().catch(() => null);
   const donorName = typeof body?.donorName === "string" ? body.donorName.trim() : "";
   const amount = Number(body?.amount);
@@ -51,6 +55,7 @@ export async function POST(req: NextRequest) {
       note: typeof body?.note === "string" ? body.note : "",
       source: "MANUAL",
       status: "CONFIRMED",
+      createdBy: auth.session.name,
       ...(donatedAt ? { createdAt: donatedAt } : {}),
     },
   });

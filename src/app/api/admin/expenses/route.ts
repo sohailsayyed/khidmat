@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
   const expenses = await prisma.expense.findMany({ orderBy: { spentAt: "desc" } });
@@ -7,6 +8,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
   const body = await req.json().catch(() => null);
   const purpose = typeof body?.purpose === "string" ? body.purpose.trim() : "";
   const amount = Number(body?.amount);
@@ -29,6 +33,7 @@ export async function POST(req: NextRequest) {
       purpose,
       amount,
       note: typeof body?.note === "string" ? body.note : "",
+      createdBy: auth.session.name,
       ...(spentAt ? { spentAt } : {}),
     },
   });

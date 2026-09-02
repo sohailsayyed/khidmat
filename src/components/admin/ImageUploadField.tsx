@@ -7,10 +7,12 @@ export default function ImageUploadField({
   label,
   value,
   onChange,
+  readOnly,
 }: {
   label: string;
   value: string;
   onChange: (url: string) => void;
+  readOnly?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -49,10 +51,12 @@ export default function ImageUploadField({
             None
           </div>
         )}
-        <label className="cursor-pointer rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50">
-          {uploading ? "Uploading…" : "Upload"}
-          <input type="file" accept="image/*" className="hidden" onChange={handleFile} disabled={uploading} />
-        </label>
+        {!readOnly && (
+          <label className="cursor-pointer rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50">
+            {uploading ? "Uploading…" : "Upload"}
+            <input type="file" accept="image/*" className="hidden" onChange={handleFile} disabled={uploading} />
+          </label>
+        )}
       </div>
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SiteSettings } from "@prisma/client";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import { useCanEdit } from "@/components/admin/AdminRoleContext";
 
 type FormState = Omit<SiteSettings, "updatedAt">;
 
@@ -40,6 +41,7 @@ function Field({
 }
 
 export default function ContentForm({ settings }: { settings: SiteSettings }) {
+  const canEdit = useCanEdit();
   const router = useRouter();
   const [form, setForm] = useState<FormState>(settings);
   const [saving, setSaving] = useState(false);
@@ -71,6 +73,12 @@ export default function ContentForm({ settings }: { settings: SiteSettings }) {
 
   return (
     <form onSubmit={handleSubmit} className="mt-6 max-w-3xl space-y-8">
+    <fieldset disabled={!canEdit} className="contents">
+      {!canEdit && (
+        <p className="rounded-lg bg-stone-100 px-4 py-2 text-sm text-stone-600">
+          Viewer accounts can see site content but can&apos;t change it.
+        </p>
+      )}
       <section className="rounded-2xl border border-stone-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-stone-900">Brand</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -135,6 +143,7 @@ export default function ContentForm({ settings }: { settings: SiteSettings }) {
         </button>
         {message && <span className="text-sm text-stone-600">{message}</span>}
       </div>
+    </fieldset>
     </form>
   );
 }

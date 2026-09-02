@@ -4,10 +4,12 @@ import { useState } from "react";
 import Image from "next/image";
 import type { Cause } from "@prisma/client";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import { useCanEdit } from "@/components/admin/AdminRoleContext";
 
 const emptyForm = { title: "", description: "", imageUrl: "", raisedLabel: "", goalLabel: "" };
 
 export default function CausesManager({ initialCauses }: { initialCauses: Cause[] }) {
+  const canEdit = useCanEdit();
   const [causes, setCauses] = useState(initialCauses);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -102,17 +104,19 @@ export default function CausesManager({ initialCauses }: { initialCauses: Cause[
             >
               {cause.published ? "Published" : "Hidden"}
             </span>
-            <div className="flex gap-2 text-sm">
-              <button onClick={() => togglePublished(cause)} className="text-stone-500 hover:text-teal-700">
-                {cause.published ? "Hide" : "Show"}
-              </button>
-              <button onClick={() => startEdit(cause)} className="text-teal-700 hover:underline">
-                Edit
-              </button>
-              <button onClick={() => handleDelete(cause.id)} className="text-red-600 hover:underline">
-                Delete
-              </button>
-            </div>
+            {canEdit && (
+              <div className="flex gap-2 text-sm">
+                <button onClick={() => togglePublished(cause)} className="text-stone-500 hover:text-teal-700">
+                  {cause.published ? "Hide" : "Show"}
+                </button>
+                <button onClick={() => startEdit(cause)} className="text-teal-700 hover:underline">
+                  Edit
+                </button>
+                <button onClick={() => handleDelete(cause.id)} className="text-red-600 hover:underline">
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
         ))}
         {causes.length === 0 && (
@@ -122,6 +126,7 @@ export default function CausesManager({ initialCauses }: { initialCauses: Cause[
         )}
       </div>
 
+      {canEdit && (
       <form onSubmit={handleSubmit} className="h-fit space-y-4 rounded-2xl border border-stone-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-stone-900">{editingId ? "Edit cause" : "Add a cause"}</h2>
         <div>
@@ -178,6 +183,7 @@ export default function CausesManager({ initialCauses }: { initialCauses: Cause[
           )}
         </div>
       </form>
+      )}
     </div>
   );
 }

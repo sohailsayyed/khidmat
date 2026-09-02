@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveUploadedImage } from "@/lib/upload";
+import { requireAdmin } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
   const formData = await req.formData().catch(() => null);
   const file = formData?.get("file");
 

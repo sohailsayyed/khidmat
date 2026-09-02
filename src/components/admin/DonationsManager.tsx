@@ -5,6 +5,7 @@ import type { Donation } from "@prisma/client";
 import { computeDateBounds } from "@/lib/dateRange";
 import DateRangeFilter, { type DateRangeValue } from "@/components/admin/DateRangeFilter";
 import { mapCsvRows, parseCsv, type ParsedImportRow } from "@/lib/csv";
+import { useCanEdit } from "@/components/admin/AdminRoleContext";
 
 function todayLocalDate() {
   const now = new Date();
@@ -34,6 +35,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function DonationsManager({ initialDonations }: { initialDonations: Donation[] }) {
+  const canEdit = useCanEdit();
   const [donations, setDonations] = useState(initialDonations);
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState("ALL");
@@ -159,7 +161,7 @@ export default function DonationsManager({ initialDonations }: { initialDonation
   }
 
   function exportCsv() {
-    const header = ["Donor", "Phone", "Email", "Amount", "Source", "Status", "Method", "Note", "Date"];
+    const header = ["Donor", "Phone", "Email", "Amount", "Source", "Status", "Method", "Note", "Added By", "Date"];
     const rows = filtered.map((d) => [
       d.donorName,
       d.donorPhone,
@@ -169,6 +171,7 @@ export default function DonationsManager({ initialDonations }: { initialDonation
       d.status,
       d.method,
       d.note,
+      d.createdBy,
       d.createdAt.toString(),
     ]);
     const csv = [header, ...rows]
@@ -291,25 +294,29 @@ export default function DonationsManager({ initialDonations }: { initialDonation
         <button onClick={exportCsv} className="rounded-lg border border-stone-300 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50">
           Export CSV
         </button>
-        <label className="cursor-pointer rounded-lg border border-stone-300 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50">
-          Import CSV
-          <input ref={importInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
-        </label>
-        <button
-          onClick={() => (showForm ? resetForm() : setShowForm(true))}
-          className="ml-auto rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
-        >
-          {showForm ? "Close" : "+ Add manual donation"}
-        </button>
+        {canEdit && (
+          <label className="cursor-pointer rounded-lg border border-stone-300 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50">
+            Import CSV
+            <input ref={importInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
+          </label>
+        )}
+        {canEdit && (
+          <button
+            onClick={() => (showForm ? resetForm() : setShowForm(true))}
+            className="ml-auto rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+          >
+            {showForm ? "Close" : "+ Add manual donation"}
+          </button>
+        )}
       </div>
 
-      {importMessage && !importPreview && (
+      {canEdit && importMessage && !importPreview && (
         <p className={`mt-3 text-sm ${importMessage.type === "success" ? "text-emerald-700" : "text-red-600"}`}>
           {importMessage.text}
         </p>
       )}
 
-      {importPreview && (
+      {canEdit && importPreview && (
         <div className="mt-4 rounded-2xl border border-stone-200 bg-white p-5">
           {(() => {
             const validRows = importPreview.filter((r) => r.row);
@@ -365,7 +372,7 @@ export default function DonationsManager({ initialDonations }: { initialDonation
         </div>
       )}
 
-      {!importPreview && (
+      {canEdit && !importPreview && (
         <p className="mt-2 text-xs text-stone-400">
           CSV needs a Donor and Amount column (Phone, Email, Date, Method, Note, Source, Status are optional).{" "}
           <button type="button" onClick={downloadImportTemplate} className="text-teal-700 hover:underline">
@@ -375,7 +382,7 @@ export default function DonationsManager({ initialDonations }: { initialDonation
         </p>
       )}
 
-      {showForm && (
+      {canEdit && showForm && (
         <form onSubmit={handleSubmitForm} className="mt-4 grid gap-3 rounded-2xl border border-stone-200 bg-white p-5 sm:grid-cols-3">
           <h2 className="col-span-full text-sm font-semibold text-stone-900">
             {editingId ? "Edit donation" : "Add manual donation"}
@@ -469,8 +476,9 @@ export default function DonationsManager({ initialDonations }: { initialDonation
               <th className="px-4 py-3">Source</th>
               <th className="px-4 py-3">Method</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Added by</th>
               <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Actions</th>
+              {canEdit && <th className="px-4 py-3">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -490,37 +498,40 @@ export default function DonationsManager({ initialDonations }: { initialDonation
                     {d.status}
                   </span>
                 </td>
+                <td className="px-4 py-3 text-stone-500">{d.createdBy || "—"}</td>
                 <td className="px-4 py-3 text-stone-500">{formatDate(d.createdAt)}</td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2 text-xs">
-                    <button onClick={() => startEdit(d)} className="text-teal-700 hover:underline">
-                      Edit
-                    </button>
-                    {d.status !== "CONFIRMED" && (
-                      <button onClick={() => updateStatus(d.id, "CONFIRMED")} className="text-emerald-700 hover:underline">
-                        Confirm
+                {canEdit && (
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2 text-xs">
+                      <button onClick={() => startEdit(d)} className="text-teal-700 hover:underline">
+                        Edit
                       </button>
-                    )}
-                    {d.status !== "CANCELLED" && (
-                      <button onClick={() => updateStatus(d.id, "CANCELLED")} className="text-stone-500 hover:underline">
-                        Cancel
+                      {d.status !== "CONFIRMED" && (
+                        <button onClick={() => updateStatus(d.id, "CONFIRMED")} className="text-emerald-700 hover:underline">
+                          Confirm
+                        </button>
+                      )}
+                      {d.status !== "CANCELLED" && (
+                        <button onClick={() => updateStatus(d.id, "CANCELLED")} className="text-stone-500 hover:underline">
+                          Cancel
+                        </button>
+                      )}
+                      {d.status !== "PENDING" && (
+                        <button onClick={() => updateStatus(d.id, "PENDING")} className="text-amber-700 hover:underline">
+                          Pending
+                        </button>
+                      )}
+                      <button onClick={() => handleDelete(d.id)} className="text-red-600 hover:underline">
+                        Delete
                       </button>
-                    )}
-                    {d.status !== "PENDING" && (
-                      <button onClick={() => updateStatus(d.id, "PENDING")} className="text-amber-700 hover:underline">
-                        Pending
-                      </button>
-                    )}
-                    <button onClick={() => handleDelete(d.id)} className="text-red-600 hover:underline">
-                      Delete
-                    </button>
-                  </div>
-                </td>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-stone-400">
+                <td colSpan={canEdit ? 9 : 8} className="px-4 py-8 text-center text-stone-400">
                   No donations match these filters.
                 </td>
               </tr>

@@ -3,10 +3,12 @@
 import { useState } from "react";
 import type { Testimonial } from "@prisma/client";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import { useCanEdit } from "@/components/admin/AdminRoleContext";
 
 const emptyForm = { name: "", role: "", message: "", imageUrl: "" };
 
 export default function TestimonialsManager({ initialTestimonials }: { initialTestimonials: Testimonial[] }) {
+  const canEdit = useCanEdit();
   const [items, setItems] = useState(initialTestimonials);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState("");
@@ -54,9 +56,11 @@ export default function TestimonialsManager({ initialTestimonials }: { initialTe
                 {t.role && <p className="text-xs text-stone-500">{t.role}</p>}
                 <p className="mt-2 text-sm text-stone-600">&ldquo;{t.message}&rdquo;</p>
               </div>
-              <button onClick={() => handleDelete(t.id)} className="shrink-0 text-sm text-red-600 hover:underline">
-                Delete
-              </button>
+              {canEdit && (
+                <button onClick={() => handleDelete(t.id)} className="shrink-0 text-sm text-red-600 hover:underline">
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -67,6 +71,7 @@ export default function TestimonialsManager({ initialTestimonials }: { initialTe
         )}
       </div>
 
+      {canEdit && (
       <form onSubmit={handleSubmit} className="h-fit space-y-4 rounded-2xl border border-stone-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-stone-900">Add testimonial</h2>
         <div>
@@ -105,6 +110,7 @@ export default function TestimonialsManager({ initialTestimonials }: { initialTe
           {saving ? "Saving…" : "Add testimonial"}
         </button>
       </form>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import type { Expense } from "@prisma/client";
 import { computeDateBounds } from "@/lib/dateRange";
 import DateRangeFilter, { type DateRangeValue } from "@/components/admin/DateRangeFilter";
 import { mapExpenseCsvRows, parseCsv, type ParsedExpenseImportRow } from "@/lib/csv";
+import { useCanEdit } from "@/components/admin/AdminRoleContext";
 
 function todayLocalDate() {
   const now = new Date();
@@ -33,6 +34,7 @@ export default function ExpensesManager({
   initialExpenses: Expense[];
   totalDonations: number;
 }) {
+  const canEdit = useCanEdit();
   const [expenses, setExpenses] = useState(initialExpenses);
   const [dateFilter, setDateFilter] = useState<DateRangeValue>({ range: "all", date: "" });
   const [showForm, setShowForm] = useState(false);
@@ -127,8 +129,8 @@ export default function ExpensesManager({
   }
 
   function exportCsv() {
-    const header = ["Purpose", "Amount", "Note", "Date"];
-    const rows = filtered.map((e) => [e.purpose, String(e.amount), e.note, e.spentAt.toString()]);
+    const header = ["Purpose", "Amount", "Note", "Added By", "Date"];
+    const rows = filtered.map((e) => [e.purpose, String(e.amount), e.note, e.createdBy, e.spentAt.toString()]);
     const csv = [header, ...rows]
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
       .join("\n");
@@ -226,25 +228,29 @@ export default function ExpensesManager({
         <button onClick={exportCsv} className="rounded-lg border border-stone-300 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50">
           Export CSV
         </button>
-        <label className="cursor-pointer rounded-lg border border-stone-300 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50">
-          Import CSV
-          <input ref={importInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
-        </label>
-        <button
-          onClick={() => (showForm ? resetForm() : setShowForm(true))}
-          className="ml-auto rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
-        >
-          {showForm ? "Close" : "+ Add expense"}
-        </button>
+        {canEdit && (
+          <label className="cursor-pointer rounded-lg border border-stone-300 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50">
+            Import CSV
+            <input ref={importInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
+          </label>
+        )}
+        {canEdit && (
+          <button
+            onClick={() => (showForm ? resetForm() : setShowForm(true))}
+            className="ml-auto rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+          >
+            {showForm ? "Close" : "+ Add expense"}
+          </button>
+        )}
       </div>
 
-      {importMessage && !importPreview && (
+      {canEdit && importMessage && !importPreview && (
         <p className={`mt-3 text-sm ${importMessage.type === "success" ? "text-emerald-700" : "text-red-600"}`}>
           {importMessage.text}
         </p>
       )}
 
-      {importPreview && (
+      {canEdit && importPreview && (
         <div className="mt-4 rounded-2xl border border-stone-200 bg-white p-5">
           {(() => {
             const validRows = importPreview.filter((r) => r.row);
@@ -300,7 +306,7 @@ export default function ExpensesManager({
         </div>
       )}
 
-      {!importPreview && (
+      {canEdit && !importPreview && (
         <p className="mt-2 text-xs text-stone-400">
           CSV needs a Purpose and Amount column (Date, Note are optional).{" "}
           <button type="button" onClick={downloadImportTemplate} className="text-teal-700 hover:underline">
@@ -310,7 +316,7 @@ export default function ExpensesManager({
         </p>
       )}
 
-      {showForm && (
+      {canEdit && showForm && (
         <form onSubmit={handleSubmit} className="mt-4 grid gap-3 rounded-2xl border border-stone-200 bg-white p-5 sm:grid-cols-3">
           <div>
             <label className="text-xs font-medium text-stone-600">Purpose</label>
@@ -373,8 +379,9 @@ export default function ExpensesManager({
               <th className="px-4 py-3">Purpose</th>
               <th className="px-4 py-3">Amount</th>
               <th className="px-4 py-3">Note</th>
+              <th className="px-4 py-3">Added by</th>
               <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Actions</th>
+              {canEdit && <th className="px-4 py-3">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -383,22 +390,25 @@ export default function ExpensesManager({
                 <td className="px-4 py-3">{e.purpose}</td>
                 <td className="px-4 py-3 font-medium">{formatCurrency(e.amount)}</td>
                 <td className="px-4 py-3 text-stone-500">{e.note || "—"}</td>
+                <td className="px-4 py-3 text-stone-500">{e.createdBy || "—"}</td>
                 <td className="px-4 py-3 text-stone-500">{formatDate(e.spentAt)}</td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2 text-xs">
-                    <button onClick={() => startEdit(e)} className="text-teal-700 hover:underline">
-                      Edit
-                    </button>
-                    <button onClick={() => handleDelete(e.id)} className="text-red-600 hover:underline">
-                      Delete
-                    </button>
-                  </div>
-                </td>
+                {canEdit && (
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2 text-xs">
+                      <button onClick={() => startEdit(e)} className="text-teal-700 hover:underline">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(e.id)} className="text-red-600 hover:underline">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-stone-400">
+                <td colSpan={canEdit ? 6 : 5} className="px-4 py-8 text-center text-stone-400">
                   No expenses match these filters.
                 </td>
               </tr>

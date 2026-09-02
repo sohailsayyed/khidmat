@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
+  const auth = await requireAdmin();
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
   const [siteSettings, causes, gallery, testimonials, donations, expenses] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "main" } }),
     prisma.cause.findMany({ orderBy: { order: "asc" } }),
@@ -73,6 +77,7 @@ const donationSchema = z.object({
   status: z.enum(["PENDING", "CONFIRMED", "CANCELLED"]),
   method: z.string().default(""),
   note: z.string().default(""),
+  createdBy: z.string().default(""),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -82,6 +87,7 @@ const expenseSchema = z.object({
   purpose: z.string(),
   amount: z.number(),
   note: z.string().default(""),
+  createdBy: z.string().default(""),
   spentAt: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -123,6 +129,9 @@ const backupSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdmin();
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
+
   const body = await req.json().catch(() => null);
   const parsed = backupSchema.safeParse(body);
 

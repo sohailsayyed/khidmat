@@ -10,12 +10,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AdminRole {
+  ADMIN
+  VIEWER
+}
+
 model Admin {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   name         String
-  email        String   @unique
+  email        String    @unique
   passwordHash String
-  createdAt    DateTime @default(now())
+  role         AdminRole @default(ADMIN)
+  createdAt    DateTime  @default(now())
 }
 
 // Singleton row (id always "main") holding editable site-wide content.
@@ -95,6 +101,9 @@ model Donation {
   status      DonationStatus @default(PENDING)
   method      String         @default("")
   note        String         @default("")
+  // Name of the admin who added this record (manual entries/imports only —
+  // blank for donations submitted by visitors through the website).
+  createdBy   String         @default("")
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 }
@@ -105,6 +114,8 @@ model Expense {
   amount    Float
   note      String   @default("")
   spentAt   DateTime @default(now())
+  // Name of the admin who added this record, for audit purposes.
+  createdBy String   @default("")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
