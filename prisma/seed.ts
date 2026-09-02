@@ -32,19 +32,19 @@ async function main() {
         {
           title: "Food for Families",
           description: "We provide monthly ration kits to families struggling to afford basic meals.",
-          imageUrl: "/uploads/sample-cause-food.svg",
+          imageUrl: "/api/uploads/sample-cause-food.svg",
           order: 1,
         },
         {
           title: "Education Support",
           description: "Sponsoring school fees, books, and uniforms for underprivileged children.",
-          imageUrl: "/uploads/sample-cause-education.svg",
+          imageUrl: "/api/uploads/sample-cause-education.svg",
           order: 2,
         },
         {
           title: "Healthcare Aid",
           description: "Free medical camps and financial assistance for urgent treatments.",
-          imageUrl: "/uploads/sample-cause-health.svg",
+          imageUrl: "/api/uploads/sample-cause-health.svg",
           order: 3,
         },
       ],
@@ -56,12 +56,12 @@ async function main() {
   if (galleryCount === 0) {
     await prisma.galleryImage.createMany({
       data: [
-        { imageUrl: "/uploads/sample-gallery-1.svg", caption: "Community gathering", order: 1 },
-        { imageUrl: "/uploads/sample-gallery-2.svg", caption: "Donation drive", order: 2 },
-        { imageUrl: "/uploads/sample-gallery-3.svg", caption: "Volunteers at work", order: 3 },
-        { imageUrl: "/uploads/sample-gallery-4.svg", caption: "Education support", order: 4 },
-        { imageUrl: "/uploads/sample-gallery-5.svg", caption: "Healthcare camp", order: 5 },
-        { imageUrl: "/uploads/sample-gallery-6.svg", caption: "Food distribution", order: 6 },
+        { imageUrl: "/api/uploads/sample-gallery-1.svg", caption: "Community gathering", order: 1 },
+        { imageUrl: "/api/uploads/sample-gallery-2.svg", caption: "Donation drive", order: 2 },
+        { imageUrl: "/api/uploads/sample-gallery-3.svg", caption: "Volunteers at work", order: 3 },
+        { imageUrl: "/api/uploads/sample-gallery-4.svg", caption: "Education support", order: 4 },
+        { imageUrl: "/api/uploads/sample-gallery-5.svg", caption: "Healthcare camp", order: 5 },
+        { imageUrl: "/api/uploads/sample-gallery-6.svg", caption: "Food distribution", order: 6 },
       ],
     });
     console.log("Seeded default gallery images");

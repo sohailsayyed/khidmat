@@ -40,6 +40,7 @@ export default function DonationsManager({ initialDonations }: { initialDonation
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [dateFilter, setDateFilter] = useState<DateRangeValue>({ range: "all", date: "" });
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(makeEmptyForm);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -78,7 +79,29 @@ export default function DonationsManager({ initialDonations }: { initialDonation
     return { confirmed, pending, count: filtered.length };
   }, [filtered]);
 
-  async function handleAddManual(e: React.FormEvent) {
+  function startEdit(donation: Donation) {
+    setEditingId(donation.id);
+    setForm({
+      donorName: donation.donorName,
+      donorPhone: donation.donorPhone,
+      donorEmail: donation.donorEmail,
+      amount: String(donation.amount),
+      method: donation.method,
+      note: donation.note,
+      donatedAt: new Date(donation.createdAt).toISOString().slice(0, 10),
+    });
+    setShowForm(true);
+    setError("");
+  }
+
+  function resetForm() {
+    setEditingId(null);
+    setForm(makeEmptyForm());
+    setShowForm(false);
+    setError("");
+  }
+
+  async function handleSubmitForm(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     const amount = Number(form.amount);
@@ -92,16 +115,26 @@ export default function DonationsManager({ initialDonations }: { initialDonation
     }
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/donations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, amount }),
-      });
-      const created = await res.json();
-      if (!res.ok) throw new Error(created.error);
-      setDonations((d) => [created, ...d]);
-      setForm(makeEmptyForm());
-      setShowForm(false);
+      if (editingId) {
+        const res = await fetch(`/api/admin/donations/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...form, amount }),
+        });
+        const updated = await res.json();
+        if (!res.ok) throw new Error(updated.error);
+        setDonations((d) => d.map((x) => (x.id === editingId ? updated : x)));
+      } else {
+        const res = await fetch("/api/admin/donations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...form, amount }),
+        });
+        const created = await res.json();
+        if (!res.ok) throw new Error(created.error);
+        setDonations((d) => [created, ...d]);
+      }
+      resetForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -263,7 +296,7 @@ export default function DonationsManager({ initialDonations }: { initialDonation
           <input ref={importInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
         </label>
         <button
-          onClick={() => setShowForm((s) => !s)}
+          onClick={() => (showForm ? resetForm() : setShowForm(true))}
           className="ml-auto rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
         >
           {showForm ? "Close" : "+ Add manual donation"}
@@ -343,7 +376,10 @@ export default function DonationsManager({ initialDonations }: { initialDonation
       )}
 
       {showForm && (
-        <form onSubmit={handleAddManual} className="mt-4 grid gap-3 rounded-2xl border border-stone-200 bg-white p-5 sm:grid-cols-3">
+        <form onSubmit={handleSubmitForm} className="mt-4 grid gap-3 rounded-2xl border border-stone-200 bg-white p-5 sm:grid-cols-3">
+          <h2 className="col-span-full text-sm font-semibold text-stone-900">
+            {editingId ? "Edit donation" : "Add manual donation"}
+          </h2>
           <div>
             <label className="text-xs font-medium text-stone-600">Donor name</label>
             <input
@@ -405,15 +441,20 @@ export default function DonationsManager({ initialDonations }: { initialDonation
             />
           </div>
           {error && <p className="col-span-full text-sm text-red-600">{error}</p>}
-          <div className="col-span-full">
+          <div className="col-span-full flex items-center gap-3">
             <button
               type="submit"
               disabled={saving}
               className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
             >
-              {saving ? "Saving…" : "Add donation"}
+              {saving ? "Saving…" : editingId ? "Update donation" : "Add donation"}
             </button>
-            <p className="mt-1 text-xs text-stone-400">Manual entries are recorded as Confirmed by default.</p>
+            {editingId && (
+              <button type="button" onClick={resetForm} className="text-sm text-stone-500 hover:underline">
+                Cancel
+              </button>
+            )}
+            {!editingId && <p className="text-xs text-stone-400">Manual entries are recorded as Confirmed by default.</p>}
           </div>
         </form>
       )}
@@ -452,6 +493,9 @@ export default function DonationsManager({ initialDonations }: { initialDonation
                 <td className="px-4 py-3 text-stone-500">{formatDate(d.createdAt)}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2 text-xs">
+                    <button onClick={() => startEdit(d)} className="text-teal-700 hover:underline">
+                      Edit
+                    </button>
                     {d.status !== "CONFIRMED" && (
                       <button onClick={() => updateStatus(d.id, "CONFIRMED")} className="text-emerald-700 hover:underline">
                         Confirm

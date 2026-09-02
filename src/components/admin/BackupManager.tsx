@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Counts = { causes: number; gallery: number; testimonials: number; donations: number };
+type Counts = { causes: number; gallery: number; testimonials: number; donations: number; expenses: number };
 
 export default function BackupManager({ counts }: { counts: Counts }) {
   const router = useRouter();
@@ -40,8 +40,9 @@ export default function BackupManager({ counts }: { counts: Counts }) {
     }
 
     const confirmed = confirm(
-      "Restoring will REPLACE all current causes, gallery photos, testimonials, and donation records " +
-        "with the contents of this backup file. This cannot be undone. Continue?"
+      "Restoring will REPLACE all current site content (hero/about text, contact & QR details, etc.), " +
+        "causes, gallery photos, testimonials, donation records, and expense records with the contents " +
+        "of this backup file. This cannot be undone. Continue?"
     );
     if (!confirmed) return;
 
@@ -59,7 +60,7 @@ export default function BackupManager({ counts }: { counts: Counts }) {
       if (!res.ok) throw new Error(data.error || "Restore failed.");
       setMessage({
         type: "success",
-        text: `Restored ${data.counts.causes} causes, ${data.counts.gallery} gallery photos, ${data.counts.testimonials} testimonials, and ${data.counts.donations} donations.`,
+        text: `Restored site content, ${data.counts.causes} causes, ${data.counts.gallery} gallery photos, ${data.counts.testimonials} testimonials, ${data.counts.donations} donations, and ${data.counts.expenses} expenses.`,
       });
       if (fileInputRef.current) fileInputRef.current.value = "";
       router.refresh();
@@ -86,6 +87,10 @@ export default function BackupManager({ counts }: { counts: Counts }) {
 
         <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <div>
+            <dt className="text-stone-500">Site content</dt>
+            <dd className="font-medium text-emerald-700">✓ Included</dd>
+          </div>
+          <div>
             <dt className="text-stone-500">Causes</dt>
             <dd className="font-medium text-stone-900">{counts.causes}</dd>
           </div>
@@ -101,6 +106,10 @@ export default function BackupManager({ counts }: { counts: Counts }) {
             <dt className="text-stone-500">Donations</dt>
             <dd className="font-medium text-stone-900">{counts.donations}</dd>
           </div>
+          <div>
+            <dt className="text-stone-500">Expenses</dt>
+            <dd className="font-medium text-stone-900">{counts.expenses}</dd>
+          </div>
         </dl>
 
         <button
@@ -113,17 +122,17 @@ export default function BackupManager({ counts }: { counts: Counts }) {
 
         <p className="mt-3 text-xs text-stone-400">
           This backs up your data — site text, contact/QR details, causes, gallery entries, testimonials,
-          and donation records. It does not copy the uploaded image files themselves; back up the{" "}
-          <code>public/uploads</code> folder separately to keep your photos too.
+          donation records, and expense records. It does not copy the uploaded image files themselves; back
+          up the server&apos;s uploads folder separately to keep your photos too.
         </p>
       </div>
 
       <div className="rounded-2xl border border-stone-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-stone-900">Restore from backup</h2>
         <p className="mt-1 text-sm text-stone-500">
-          Choose a previously downloaded backup file. This <strong>replaces</strong> all current causes,
-          gallery entries, testimonials, and donation records with the contents of the file, and overwrites
-          site settings (contact number, QR code, etc.) if the file includes them.
+          Choose a previously downloaded backup file. This <strong>replaces</strong> all current site
+          content (hero/about text, contact number, QR code, etc.), causes, gallery entries, testimonials,
+          donation records, and expense records with the contents of the file.
         </p>
 
         <input

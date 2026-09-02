@@ -2,11 +2,12 @@ import { prisma } from "@/lib/prisma";
 import BackupManager from "@/components/admin/BackupManager";
 
 export default async function AdminBackupPage() {
-  const [causes, gallery, testimonials, donations] = await Promise.all([
+  const [causes, gallery, testimonials, donations, expenses] = await Promise.all([
     prisma.cause.count(),
     prisma.galleryImage.count(),
     prisma.testimonial.count(),
     prisma.donation.count(),
+    prisma.expense.count(),
   ]);
 
   return (
@@ -15,7 +16,7 @@ export default async function AdminBackupPage() {
       <p className="mt-1 text-sm text-stone-500">
         Download a full backup before doing any maintenance, and restore from it if something goes wrong.
       </p>
-      <BackupManager counts={{ causes, gallery, testimonials, donations }} />
+      <BackupManager counts={{ causes, gallery, testimonials, donations, expenses }} />
     </div>
   );
 }

@@ -25,15 +25,15 @@ model SiteSettings {
   tagline         String   @default("Serving humanity, one act of kindness at a time")
   heroTitle       String   @default("Together We Can Change Lives")
   heroSubtitle    String   @default("Khidmat connects generous hearts with people who need help the most. Join us in our mission.")
-  heroImageUrl    String   @default("/uploads/sample-hero.svg")
+  heroImageUrl    String   @default("/api/uploads/sample-hero.svg")
   logoUrl         String   @default("")
   aboutTitle      String   @default("About Khidmat")
   aboutText       String   @default("Khidmat is a community-driven charity dedicated to providing food, education, healthcare, and shelter to those in need. Every contribution, big or small, helps us reach more people.")
-  aboutImageUrl   String   @default("/uploads/sample-about.svg")
+  aboutImageUrl   String   @default("/api/uploads/sample-about.svg")
   contactNumber   String   @default("+91 90000 00000")
   contactEmail    String   @default("contact@khidmat.org")
   contactAddress  String   @default("Pune, Maharashtra, India")
-  qrImageUrl      String   @default("/uploads/placeholder-qr.png")
+  qrImageUrl      String   @default("/api/uploads/placeholder-qr.png")
   donateNote      String   @default("Scan the QR code or call us to donate. Every contribution is deeply appreciated.")
   facebookUrl     String   @default("")
   instagramUrl    String   @default("")
@@ -46,7 +46,7 @@ model Cause {
   id          String   @id @default(cuid())
   title       String
   description String
-  imageUrl    String   @default("/uploads/placeholder-cause.svg")
+  imageUrl    String   @default("/api/uploads/placeholder-cause.svg")
   raisedLabel String   @default("")
   goalLabel   String   @default("")
   order       Int      @default(0)
@@ -97,4 +97,14 @@ model Donation {
   note        String         @default("")
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  purpose   String
+  amount    Float
+  note      String   @default("")
+  spentAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

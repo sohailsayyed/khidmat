@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/admin/gallery", label: "Gallery" },
   { href: "/admin/testimonials", label: "Testimonials" },
   { href: "/admin/donations", label: "Donations" },
+  { href: "/admin/expenses", label: "Amount Spent" },
   { href: "/admin/backup", label: "Backup & Restore" },
 ];
 
@@ -47,7 +48,12 @@ export default async function AdminShellLayout({ children }: { children: React.R
       <div className="flex-1">
         <header className="flex items-center justify-between border-b border-stone-200 bg-white px-6 py-3">
           <span className="text-sm text-stone-500">{session?.email}</span>
-          <LogoutButton />
+          <div className="flex items-center gap-4">
+            <Link href="/admin/account" className="text-sm font-medium text-teal-700 hover:underline">
+              Change password
+            </Link>
+            <LogoutButton />
+          </div>
         </header>
         <main className="p-6">{children}</main>
       </div>

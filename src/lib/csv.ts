@@ -165,3 +165,69 @@ export function mapCsvRows(rows: string[][]): ParsedImportRow[] {
     };
   });
 }
+
+const EXPENSE_HEADER_ALIASES: Record<string, string[]> = {
+  purpose: ["purpose", "expense", "description", "item"],
+  amount: ["amount", "amount (₹)", "amount(₹)", "amount (rs)", "amount(rs)"],
+  note: ["note", "notes"],
+  spentAt: ["date", "spent date", "spent at", "spentat"],
+};
+
+export type ExpenseImportRow = {
+  purpose: string;
+  amount: number;
+  note: string;
+  spentAt?: string;
+};
+
+export type ParsedExpenseImportRow = {
+  index: number;
+  raw: string[];
+  row: ExpenseImportRow | null;
+  error: string | null;
+};
+
+export function mapExpenseCsvRows(rows: string[][]): ParsedExpenseImportRow[] {
+  if (rows.length === 0) return [];
+
+  const headers = rows[0].map(normalizeHeader);
+  const colIndex: Partial<Record<keyof typeof EXPENSE_HEADER_ALIASES, number>> = {};
+  for (const [key, aliases] of Object.entries(EXPENSE_HEADER_ALIASES)) {
+    const idx = headers.findIndex((h) => aliases.includes(h));
+    if (idx !== -1) colIndex[key as keyof typeof EXPENSE_HEADER_ALIASES] = idx;
+  }
+
+  const get = (r: string[], key: keyof typeof EXPENSE_HEADER_ALIASES) => {
+    const idx = colIndex[key];
+    return idx !== undefined ? (r[idx] ?? "").trim() : "";
+  };
+
+  return rows.slice(1).map((r, i) => {
+    if (r.every((c) => c.trim() === "")) {
+      return { index: i + 2, raw: r, row: null, error: "Empty row" };
+    }
+
+    const purpose = get(r, "purpose");
+    const amountRaw = get(r, "amount").replace(/[^0-9.-]/g, "");
+    const amount = amountRaw ? Number(amountRaw) : NaN;
+
+    if (!purpose) {
+      return { index: i + 2, raw: r, row: null, error: "Missing purpose" };
+    }
+    if (!amountRaw || Number.isNaN(amount) || amount <= 0) {
+      return { index: i + 2, raw: r, row: null, error: "Missing or invalid amount" };
+    }
+
+    return {
+      index: i + 2,
+      raw: r,
+      row: {
+        purpose,
+        amount,
+        note: get(r, "note"),
+        spentAt: normalizeDateString(get(r, "spentAt")),
+      },
+      error: null,
+    };
+  });
+}

@@ -23,14 +23,21 @@ export default async function AdminDashboardPage({
 
   const dateWhere: Prisma.DonationWhereInput = bounds ? { createdAt: { gte: bounds.gte, lt: bounds.lt } } : {};
 
-  const [confirmedAgg, pendingAgg, websiteCount, manualCount, causeCount, recent] = await Promise.all([
-    prisma.donation.aggregate({ where: { ...dateWhere, status: "CONFIRMED" }, _sum: { amount: true }, _count: true }),
-    prisma.donation.aggregate({ where: { ...dateWhere, status: "PENDING" }, _sum: { amount: true }, _count: true }),
-    prisma.donation.count({ where: { ...dateWhere, source: "WEBSITE" } }),
-    prisma.donation.count({ where: { ...dateWhere, source: "MANUAL" } }),
-    prisma.cause.count(),
-    prisma.donation.findMany({ where: dateWhere, orderBy: { createdAt: "desc" }, take: 20 }),
-  ]);
+  const [confirmedAgg, pendingAgg, websiteCount, manualCount, causeCount, recent, allTimeConfirmed, allTimeExpenses] =
+    await Promise.all([
+      prisma.donation.aggregate({ where: { ...dateWhere, status: "CONFIRMED" }, _sum: { amount: true }, _count: true }),
+      prisma.donation.aggregate({ where: { ...dateWhere, status: "PENDING" }, _sum: { amount: true }, _count: true }),
+      prisma.donation.count({ where: { ...dateWhere, source: "WEBSITE" } }),
+      prisma.donation.count({ where: { ...dateWhere, source: "MANUAL" } }),
+      prisma.cause.count(),
+      prisma.donation.findMany({ where: dateWhere, orderBy: { createdAt: "desc" }, take: 20 }),
+      // Available balance is always all-time — it reflects actual money on
+      // hand, not just what happened in the selected period.
+      prisma.donation.aggregate({ where: { status: "CONFIRMED" }, _sum: { amount: true } }),
+      prisma.expense.aggregate({ _sum: { amount: true } }),
+    ]);
+
+  const availableBalance = (allTimeConfirmed._sum.amount ?? 0) - (allTimeExpenses._sum.amount ?? 0);
 
   const stats = [
     { label: "Total Confirmed", value: formatCurrency(confirmedAgg._sum.amount ?? 0), sub: `${confirmedAgg._count} donations` },
@@ -38,6 +45,7 @@ export default async function AdminDashboardPage({
     { label: "From Website", value: String(websiteCount), sub: "donation intents submitted" },
     { label: "Manual Entries", value: String(manualCount), sub: "recorded by admins" },
     { label: "Active Causes", value: String(causeCount), sub: "shown on site" },
+    { label: "Available Balance", value: formatCurrency(availableBalance), sub: "all-time, after expenses" },
   ];
 
   return (
@@ -49,7 +57,7 @@ export default async function AdminDashboardPage({
         </Suspense>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {stats.map((s) => (
           <div key={s.label} className="rounded-2xl border border-stone-200 bg-white p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-stone-500">{s.label}</p>

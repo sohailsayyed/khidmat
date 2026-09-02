@@ -1,0 +1,8 @@
+# Currently serving on plain HTTP via IP — no hostname to request a
+# certificate for yet. Once you have a domain pointed at this server, replace
+# the line below with your domain (see DOCKER-SETUP.md) and Caddy will
+# automatically switch to HTTPS with a real certificate, no other changes
+# needed.
+:80 {
+	reverse_proxy khidmat:3000
+}

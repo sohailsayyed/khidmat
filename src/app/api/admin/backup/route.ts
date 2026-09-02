@@ -3,22 +3,24 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const [siteSettings, causes, gallery, testimonials, donations] = await Promise.all([
+  const [siteSettings, causes, gallery, testimonials, donations, expenses] = await Promise.all([
     prisma.siteSettings.findUnique({ where: { id: "main" } }),
     prisma.cause.findMany({ orderBy: { order: "asc" } }),
     prisma.galleryImage.findMany({ orderBy: { order: "asc" } }),
     prisma.testimonial.findMany({ orderBy: { order: "asc" } }),
     prisma.donation.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.expense.findMany({ orderBy: { spentAt: "asc" } }),
   ]);
 
   const backup = {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     siteSettings,
     causes,
     gallery,
     testimonials,
     donations,
+    expenses,
   };
 
   return new NextResponse(JSON.stringify(backup, null, 2), {
@@ -75,6 +77,16 @@ const donationSchema = z.object({
   updatedAt: z.string(),
 });
 
+const expenseSchema = z.object({
+  id: z.string(),
+  purpose: z.string(),
+  amount: z.number(),
+  note: z.string().default(""),
+  spentAt: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
 const siteSettingsSchema = z.object({
   id: z.string().default("main"),
   siteName: z.string(),
@@ -105,6 +117,9 @@ const backupSchema = z.object({
   gallery: z.array(galleryImageSchema).default([]),
   testimonials: z.array(testimonialSchema).default([]),
   donations: z.array(donationSchema).default([]),
+  // Absent in backups made before Expenses existed (version 1) — defaults to
+  // empty so those older files still restore cleanly.
+  expenses: z.array(expenseSchema).default([]),
 });
 
 export async function POST(req: NextRequest) {
@@ -121,9 +136,10 @@ export async function POST(req: NextRequest) {
   const data = parsed.data;
 
   await prisma.$transaction(async (tx) => {
-    // Content and donation records only — admin login accounts are never
-    // touched by a restore, so this can't lock anyone out.
+    // Content, donation, and expense records only — admin login accounts are
+    // never touched by a restore, so this can't lock anyone out.
     await tx.donation.deleteMany();
+    await tx.expense.deleteMany();
     await tx.testimonial.deleteMany();
     await tx.galleryImage.deleteMany();
     await tx.cause.deleteMany();
@@ -153,6 +169,12 @@ export async function POST(req: NextRequest) {
       const { createdAt, updatedAt, ...rest } = d;
       await tx.donation.create({ data: { ...rest, createdAt: new Date(createdAt), updatedAt: new Date(updatedAt) } });
     }
+    for (const ex of data.expenses) {
+      const { spentAt, createdAt, updatedAt, ...rest } = ex;
+      await tx.expense.create({
+        data: { ...rest, spentAt: new Date(spentAt), createdAt: new Date(createdAt), updatedAt: new Date(updatedAt) },
+      });
+    }
   });
 
   return NextResponse.json({
@@ -162,6 +184,7 @@ export async function POST(req: NextRequest) {
       gallery: data.gallery.length,
       testimonials: data.testimonials.length,
       donations: data.donations.length,
+      expenses: data.expenses.length,
     },
   });
 }

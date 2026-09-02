@@ -8,16 +8,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
   }
 
-  const data: Record<string, string | number> = {};
+  const data: Record<string, string | number | Date> = {};
   if (body.status === "PENDING" || body.status === "CONFIRMED" || body.status === "CANCELLED") {
     data.status = body.status;
   }
-  if (typeof body.donorName === "string") data.donorName = body.donorName;
+  if (typeof body.donorName === "string" && body.donorName.trim()) data.donorName = body.donorName;
   if (typeof body.donorPhone === "string") data.donorPhone = body.donorPhone;
   if (typeof body.donorEmail === "string") data.donorEmail = body.donorEmail;
   if (typeof body.method === "string") data.method = body.method;
   if (typeof body.note === "string") data.note = body.note;
   if (typeof body.amount === "number" && body.amount > 0) data.amount = body.amount;
+  if (typeof body.donatedAt === "string" && body.donatedAt) {
+    const parsed = new Date(`${body.donatedAt}T12:00:00`);
+    if (!Number.isNaN(parsed.getTime())) data.createdAt = parsed;
+  }
 
   try {
     const donation = await prisma.donation.update({ where: { id }, data });
