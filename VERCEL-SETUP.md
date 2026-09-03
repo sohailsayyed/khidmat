@@ -7,12 +7,22 @@ untouched and keep using SQLite exactly as before.
 
 ## 1. Connect a Postgres database
 
-In your Vercel project → **Storage** tab → **Create Database** → Postgres (Vercel's Postgres offering is
-backed by Neon). Connecting it automatically adds a `DATABASE_URL` environment variable to your project —
-you don't need to set it by hand.
+In your Vercel project → **Storage** tab → **Create Database** → Postgres (Vercel's own offering is backed
+by Neon). Connecting it automatically adds a `DATABASE_URL` environment variable to your project.
 
-(Using Neon or another Postgres provider directly instead is fine too — just add `DATABASE_URL` yourself
-as an environment variable, in Project Settings → Environment Variables.)
+Using Neon, Supabase, or another Postgres provider directly is fine too — add the connection string
+yourself as `DATABASE_URL` in Project Settings → Environment Variables. **If that provider uses connection
+pooling** (Supabase does by default — a pooled connection string looks like
+`...pooler.supabase.com:6543/...`, or has `?pgbouncer=true` in it), you need a **second** variable too:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | The pooled connection string. Used for normal app queries — a pool is what lets many concurrent serverless function instances share a small number of real database connections without exhausting the database's connection limit. |
+| `DIRECT_URL` | The **direct**, non-pooled connection string (usually the same host/port on `:5432`, no `pooler` in the hostname). Used only by `prisma migrate deploy`, which needs a real Postgres session to take an advisory lock — pooled connections (PgBouncer in transaction mode) don't support that, so migrations hang indefinitely instead of failing if you give it the pooled URL here. |
+
+For Supabase specifically: Project Settings → Database → Connection string has both — "Transaction pooler"
+(→ `DATABASE_URL`) and "Direct connection" (→ `DIRECT_URL`). If your provider doesn't pool connections at
+all (a plain single Postgres instance), set both variables to the same value.
 
 ## 2. Connect Blob storage (for uploaded images)
 
@@ -31,8 +41,9 @@ Project Settings → Environment Variables:
 | `ADMIN_PASSWORD` | The password for that account. Change it from a placeholder. |
 | `ADMIN_NAME` | Optional — defaults to "Khidmat Admin". |
 
-`DATABASE_URL` and `BLOB_READ_WRITE_TOKEN` come from steps 1–2 — don't set those manually unless you're
-using a Postgres/Blob provider outside Vercel's own integration.
+`BLOB_READ_WRITE_TOKEN` comes from step 2 automatically. `DATABASE_URL` (and `DIRECT_URL`, if your provider
+pools connections) come from step 1 — automatically if you used Vercel's own Postgres, or set by hand if
+you connected Neon/Supabase/another provider directly.
 
 ## 4. Deploy
 
@@ -48,11 +59,17 @@ database from your own machine instead, pointed at the same Postgres database Ve
 `DATABASE_URL` value from Vercel's dashboard):
 
 ```bash
+npx prisma generate --config prisma/postgres/prisma.config.ts
 DATABASE_URL="<paste the DATABASE_URL from Vercel>" \
 ADMIN_EMAIL="you@yourcharity.org" \
 ADMIN_PASSWORD="a-strong-password" \
 npx tsx prisma/seed.ts
 ```
+
+The `prisma generate` line matters — without it, the seed script uses whatever Prisma Client is already
+sitting in `node_modules` locally (the SQLite one, from your normal local dev setup), which can't talk to
+Postgres correctly. After seeding, run `npx prisma generate` (no `--config`) again to switch your local
+`node_modules` back to the SQLite client for local dev.
 
 This is safe to run again later — it only creates the admin account if it doesn't already exist, and never
 touches your data otherwise.
@@ -65,14 +82,14 @@ If you change the data model (add a field, a new table, etc.), you now have **tw
 
 1. `prisma/schema.prisma` (SQLite) — as usual: `npx prisma migrate dev --name your_change`
 2. `prisma/postgres/schema.prisma` (Postgres) — mirror the same change, then generate a matching migration
-   against a real (or local Docker) Postgres instance:
-   ```bash
-   DATABASE_URL="postgresql://..." npx prisma migrate dev --config prisma/postgres/prisma.config.ts --name your_change
-   ```
-   A quick way to get a throwaway local Postgres to generate against:
+   against a real (or local Docker) Postgres instance. The schema requires both `DATABASE_URL` and
+   `DIRECT_URL` to be set (see step 1 above) — against a plain, unpooled instance like the throwaway
+   container below, they're just the same value:
    ```bash
    docker run -d --name khidmat-pg -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=khidmat -p 5433:5432 postgres:16-alpine
-   DATABASE_URL="postgresql://postgres:dev@localhost:5433/khidmat" npx prisma migrate dev --config prisma/postgres/prisma.config.ts --name your_change
+   DATABASE_URL="postgresql://postgres:dev@localhost:5433/khidmat" \
+   DIRECT_URL="postgresql://postgres:dev@localhost:5433/khidmat" \
+   npx prisma migrate dev --config prisma/postgres/prisma.config.ts --name your_change
    docker rm -f khidmat-pg
    ```
    Commit the newly generated file under `prisma/postgres/migrations/` — Vercel applies it automatically
