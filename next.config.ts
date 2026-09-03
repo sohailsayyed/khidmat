@@ -7,6 +7,15 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Vercel Blob (used for uploads on Vercel — see VERCEL-SETUP.md) serves
+    // files from a per-store subdomain of this host; next/image refuses to
+    // load any external hostname that isn't explicitly allow-listed here.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com",
+      },
+    ],
   },
 };
 
