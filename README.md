@@ -49,16 +49,23 @@ helper scripts:
 ./docker-deploy.sh   # every time after that, when you've changed code: pulls, rebuilds, redeploys
 ```
 
+## Deploying on Vercel
+
+See **[VERCEL-SETUP.md](VERCEL-SETUP.md)** — a real, persistent deployment using a Postgres database and
+Vercel Blob for uploaded images (not the local SQLite file this app uses everywhere else, which doesn't
+survive Vercel's read-only, ephemeral filesystem). Uses a second, parallel Prisma schema
+(`prisma/postgres/`) just for this — your local dev setup and the Docker deployment above are completely
+untouched by it.
+
 ## Notes
 
 - Images uploaded from the admin panel are served through `/api/uploads/[...path]` (see `src/lib/upload.ts`
   and `src/app/api/uploads/[...path]/route.ts`), not directly from Next's `public/` static handler — `next
   start` does not reliably serve files added to `public/` after the server has started, which would
-  otherwise make uploads silently 404 in production. Where the files are actually *stored* is configurable
-  via the `UPLOADS_DIR` env var (defaults to `public/uploads` for local dev; the Docker image sets it to
-  `/app/data/uploads`, on the persistent volume). On a serverless host (e.g. Vercel) this local-disk storage
-  does not persist across deploys either way — swap in an object storage provider (S3, Cloudflare R2, etc.)
-  for that kind of host. It works as-is on Docker or any regular Node.js server/VM with persistent disk.
+  otherwise make uploads silently 404 in production. Where new uploads actually get *stored*: local disk by
+  default (configurable via `UPLOADS_DIR` — the Docker image sets it to `/app/data/uploads`, on the
+  persistent volume), or Vercel Blob automatically when `BLOB_READ_WRITE_TOKEN` is set (see
+  VERCEL-SETUP.md) — local disk doesn't persist on Vercel's serverless filesystem.
 - The donation flow doesn't process payments online — donors pay via the QR code or by calling/messaging the number shown, and staff confirm the donation from the admin panel. This matches a manual/offline collection process; a payment gateway (Razorpay, Stripe, etc.) can be added later if online payments are needed.
 - Database: SQLite file at `prisma/dev.db` locally (gitignored). In production, `DATABASE_URL` should point at a file on persistent storage (or a hosted database) — migrations apply automatically on startup (`npm run start` runs `prisma migrate deploy` first).
 - Backup & Restore covers the database only, not the uploaded image files themselves — see DOCKER-SETUP.md for backing up the Docker volume (which holds both) if you need the photos preserved too.

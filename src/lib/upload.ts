@@ -1,39 +1,11 @@
-import { mkdir, writeFile, cp } from "fs/promises";
-import { existsSync } from "fs";
+import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { put } from "@vercel/blob";
 
-const isVercel = !!process.env.VERCEL;
-
-// Vercel-demo shim: same reasoning as prisma.ts — /tmp is the only writable
-// path in a deployed serverless function, so on Vercel we always use it here
-// rather than relying on UPLOADS_DIR being configured correctly. Elsewhere
-// (Docker, a plain Node server), UPLOADS_DIR stays configurable — Docker
-// points it at the mounted volume (see docker-entrypoint.sh); local dev
-// defaults to public/uploads.
-export const UPLOAD_DIR = isVercel
-  ? "/tmp/khidmat-demo-uploads"
-  : process.env.UPLOADS_DIR || path.join(process.cwd(), "public", "uploads");
-
-let demoUploadsReady: Promise<void> | null = null;
-
-/** Copies the baked-in sample/placeholder images into UPLOAD_DIR on first use,
- * so the site doesn't show broken images before anyone's uploaded anything —
- * mirrors what docker-entrypoint.sh does for the Docker deployment. */
-function ensureDemoUploadsReady(): Promise<void> {
-  if (!isVercel) return Promise.resolve();
-  if (!demoUploadsReady) {
-    demoUploadsReady = (async () => {
-      if (existsSync(UPLOAD_DIR)) return;
-      await mkdir(UPLOAD_DIR, { recursive: true });
-      const bakedInDir = path.join(process.cwd(), "public", "uploads");
-      if (existsSync(bakedInDir)) {
-        await cp(bakedInDir, UPLOAD_DIR, { recursive: true });
-      }
-    })();
-  }
-  return demoUploadsReady;
-}
+// Configurable so Docker can point this at a mounted volume (e.g. /app/data/uploads)
+// separate from the app's public/ folder. Defaults to public/uploads for local dev.
+export const UPLOAD_DIR = process.env.UPLOADS_DIR || path.join(process.cwd(), "public", "uploads");
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"]);
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -46,13 +18,20 @@ export async function saveUploadedImage(file: File): Promise<string> {
     throw new Error("File is too large. Maximum size is 5MB.");
   }
 
-  await ensureDemoUploadsReady();
-  await mkdir(UPLOAD_DIR, { recursive: true });
-
   const ext = path.extname(file.name) || `.${file.type.split("/")[1]}`;
   const filename = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
-  const filepath = path.join(UPLOAD_DIR, filename);
 
+  // Vercel's filesystem is read-only at runtime — when Blob storage is
+  // connected (Vercel dashboard → Storage → Blob), use that instead. Local
+  // disk stays the default everywhere else (Docker, plain Node servers,
+  // local dev), where it's already persistent.
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const blob = await put(filename, file, { access: "public" });
+    return blob.url;
+  }
+
+  await mkdir(UPLOAD_DIR, { recursive: true });
+  const filepath = path.join(UPLOAD_DIR, filename);
   const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(filepath, buffer);
 
@@ -62,5 +41,3 @@ export async function saveUploadedImage(file: File): Promise<string> {
   // production (verified: works in `next dev`, 404s in `next start`).
   return `/api/uploads/${filename}`;
 }
-
-export { ensureDemoUploadsReady };
