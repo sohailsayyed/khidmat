@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { getSession } from "@/lib/auth";
-import LogoutButton from "@/components/admin/LogoutButton";
+import AdminShell from "@/components/admin/AdminShell";
 import { AdminRoleProvider } from "@/components/admin/AdminRoleContext";
 
 const NAV_ITEMS = [
@@ -22,54 +21,9 @@ export default async function AdminShellLayout({ children }: { children: React.R
 
   return (
     <AdminRoleProvider role={role}>
-      <div className="flex min-h-screen bg-stone-100">
-        <aside className="w-60 shrink-0 border-r border-stone-200 bg-white">
-          <div className="border-b border-stone-200 px-5 py-5">
-            <p className="text-lg font-semibold text-stone-900">Khidmat</p>
-            <p className="text-xs text-stone-500">Admin Panel</p>
-          </div>
-          <nav className="space-y-1 p-3">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="block rounded-lg px-3 py-2 text-sm font-medium text-stone-700 hover:bg-teal-50 hover:text-teal-800"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="border-t border-stone-200 p-3">
-            <Link
-              href="/"
-              target="_blank"
-              className="block rounded-lg px-3 py-2 text-sm font-medium text-stone-500 hover:bg-stone-50"
-            >
-              View site ↗
-            </Link>
-          </div>
-        </aside>
-
-        <div className="flex-1">
-          <header className="flex items-center justify-between border-b border-stone-200 bg-white px-6 py-3">
-            <span className="text-sm text-stone-500">
-              {session?.email}
-              {role === "VIEWER" && (
-                <span className="ml-2 rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-500">
-                  Viewer
-                </span>
-              )}
-            </span>
-            <div className="flex items-center gap-4">
-              <Link href="/admin/account" className="text-sm font-medium text-teal-700 hover:underline">
-                Change password
-              </Link>
-              <LogoutButton />
-            </div>
-          </header>
-          <main className="p-6">{children}</main>
-        </div>
-      </div>
+      <AdminShell navItems={navItems} email={session?.email} role={role}>
+        {children}
+      </AdminShell>
     </AdminRoleProvider>
   );
 }

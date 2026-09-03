@@ -249,7 +249,7 @@ export default function DonationsManager({ initialDonations }: { initialDonation
 
   return (
     <div className="mt-6">
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-stone-200 bg-white p-4">
           <p className="text-xs font-medium uppercase text-stone-500">Confirmed (filtered)</p>
           <p className="mt-1 text-xl font-semibold text-stone-900">{formatCurrency(totals.confirmed)}</p>
