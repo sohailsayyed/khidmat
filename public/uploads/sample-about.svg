@@ -37,6 +37,4 @@
   <!-- heart above the group -->
   <path d="M285,300 C260,275 220,282 210,315 C200,345 230,370 285,405 C340,370 370,345 360,315 C350,282 310,275 285,300 Z"
         fill="#e11d48" opacity="0.85"/>
-
-  <text x="60" y="60" font-family="Arial, sans-serif" font-size="20" fill="#134e4a" opacity="0.6" letter-spacing="1.5">SAMPLE IMAGE — replace from the admin panel</text>
 </svg>

@@ -31,6 +31,4 @@
     <path d="M-210,340 C-230,300 -220,250 -180,230 L-40,170 L-10,230 L-150,300 C-170,315 -195,320 -210,340 Z" fill="#e7e5e4" opacity="0.9"/>
     <path d="M210,340 C230,300 220,250 180,230 L40,170 L10,230 L150,300 C170,315 195,320 210,340 Z" fill="#f5f5f4" opacity="0.9"/>
   </g>
-
-  <text x="120" y="150" font-family="Arial, sans-serif" font-size="26" fill="#fef3c7" opacity="0.85" letter-spacing="2">SAMPLE IMAGE — replace from the admin panel</text>
 </svg>
