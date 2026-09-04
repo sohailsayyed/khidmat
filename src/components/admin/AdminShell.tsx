@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LogoutButton from "@/components/admin/LogoutButton";
 
 type NavItem = { href: string; label: string };
+
+const COLLAPSED_KEY = "khidmat-admin-sidebar-collapsed";
 
 export default function AdminShell({
   navItems,
@@ -18,6 +20,28 @@ export default function AdminShell({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Remembered per-browser so the choice sticks across page loads.
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(COLLAPSED_KEY) === "1");
+    } catch {
+      // ignore (private browsing, etc.) - just falls back to expanded
+    }
+  }, []);
+
+  function toggleCollapsed() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(COLLAPSED_KEY, next ? "1" : "0");
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }
 
   return (
     <div className="flex min-h-screen bg-stone-100">
@@ -32,7 +56,7 @@ export default function AdminShell({
       <aside
         className={`fixed inset-y-0 left-0 z-40 w-60 shrink-0 border-r border-stone-200 bg-white transition-transform md:static md:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } ${collapsed ? "md:hidden" : ""}`}
       >
         <div className="border-b border-stone-200 px-5 py-5">
           <p className="text-lg font-semibold text-stone-900">Khidmat</p>
@@ -71,6 +95,16 @@ export default function AdminShell({
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <button
+              aria-label={collapsed ? "Show sidebar" : "Hide sidebar"}
+              onClick={toggleCollapsed}
+              className="hidden shrink-0 rounded-lg border border-stone-200 p-1.5 text-stone-600 hover:bg-stone-50 md:inline-flex"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <path strokeLinecap="round" d="M9 4v16" />
               </svg>
             </button>
             <span className="truncate text-sm text-stone-500">
