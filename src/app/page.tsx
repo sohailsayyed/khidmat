@@ -13,7 +13,11 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const [settings, causes, gallery, testimonials] = await Promise.all([
     getSiteSettings(),
-    prisma.cause.findMany({ where: { published: true }, orderBy: { order: "asc" } }),
+    prisma.cause.findMany({
+      where: { published: true },
+      orderBy: { order: "asc" },
+      include: { images: { orderBy: { order: "asc" } } },
+    }),
     prisma.galleryImage.findMany({ orderBy: { order: "asc" }, take: 8 }),
     prisma.testimonial.findMany({ where: { published: true }, orderBy: { order: "asc" } }),
   ]);

@@ -28,7 +28,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (typeof body.published === "boolean") data.published = body.published;
 
   try {
-    const cause = await prisma.cause.update({ where: { id }, data });
+    const cause = await prisma.cause.update({ where: { id }, data, include: { images: true } });
     return NextResponse.json(cause);
   } catch {
     return NextResponse.json({ error: "Cause not found." }, { status: 404 });

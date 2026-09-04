@@ -61,16 +61,29 @@ model SiteSettings {
 }
 
 model Cause {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   title       String
   description String
-  imageUrl    String   @default("/api/uploads/placeholder-cause.svg")
-  raisedLabel String   @default("")
-  goalLabel   String   @default("")
-  order       Int      @default(0)
-  published   Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  imageUrl    String       @default("/api/uploads/placeholder-cause.svg")
+  raisedLabel String       @default("")
+  goalLabel   String       @default("")
+  order       Int          @default(0)
+  published   Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  images      CauseImage[]
+}
+
+// Extra photos for a cause's homepage carousel, in addition to its cover
+// imageUrl above (which stays as the admin-list thumbnail / carousel's first
+// slide for causes that don't have any of these).
+model CauseImage {
+  id        String   @id @default(cuid())
+  causeId   String
+  cause     Cause    @relation(fields: [causeId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 model GalleryImage {

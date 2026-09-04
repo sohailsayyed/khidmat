@@ -1,7 +1,7 @@
-import Image from "next/image";
-import type { Cause } from "@prisma/client";
+import type { Cause, CauseImage } from "@prisma/client";
+import CauseCarousel from "@/components/CauseCarousel";
 
-export default function CausesSection({ causes }: { causes: Cause[] }) {
+export default function CausesSection({ causes }: { causes: (Cause & { images: CauseImage[] })[] }) {
   if (causes.length === 0) return null;
 
   return (
@@ -17,15 +17,7 @@ export default function CausesSection({ causes }: { causes: Cause[] }) {
             key={cause.id}
             className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:shadow-md"
           >
-            <div className="relative h-44 w-full bg-stone-100">
-              <Image
-                src={cause.imageUrl}
-                alt={cause.title}
-                fill
-                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                className="object-cover"
-              />
-            </div>
+            <CauseCarousel images={[cause.imageUrl, ...cause.images.map((img) => img.imageUrl)]} alt={cause.title} />
             <div className="p-5">
               <h3 className="text-lg font-semibold text-stone-900">{cause.title}</h3>
               <p className="mt-2 text-sm text-stone-600">{cause.description}</p>

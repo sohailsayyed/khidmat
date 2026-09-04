@@ -2,21 +2,24 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import type { Cause } from "@prisma/client";
+import type { Cause, CauseImage } from "@prisma/client";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import { useCanEdit } from "@/components/admin/AdminRoleContext";
 
 const emptyForm = { title: "", description: "", imageUrl: "", raisedLabel: "", goalLabel: "" };
 
-export default function CausesManager({ initialCauses }: { initialCauses: Cause[] }) {
+type CauseWithImages = Cause & { images: CauseImage[] };
+
+export default function CausesManager({ initialCauses }: { initialCauses: CauseWithImages[] }) {
   const canEdit = useCanEdit();
   const [causes, setCauses] = useState(initialCauses);
+  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  function startEdit(cause: Cause) {
+  function startEdit(cause: CauseWithImages) {
     setEditingId(cause.id);
     setForm({
       title: cause.title,
@@ -85,36 +88,109 @@ export default function CausesManager({ initialCauses }: { initialCauses: Cause[
     if (res.ok) setCauses((cs) => cs.filter((c) => c.id !== id));
   }
 
+  async function handleAddImage(causeId: string, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingFor(causeId);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed");
+
+      const cause = causes.find((c) => c.id === causeId);
+      const res = await fetch(`/api/admin/causes/${causeId}/images`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: uploadData.url, order: cause?.images.length ?? 0 }),
+      });
+      const created = await res.json();
+      if (!res.ok) throw new Error(created.error);
+      setCauses((cs) => cs.map((c) => (c.id === causeId ? { ...c, images: [...c.images, created] } : c)));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingFor(null);
+      e.target.value = "";
+    }
+  }
+
+  async function handleDeleteImage(causeId: string, imageId: string) {
+    const res = await fetch(`/api/admin/causes/${causeId}/images/${imageId}`, { method: "DELETE" });
+    if (res.ok) {
+      setCauses((cs) =>
+        cs.map((c) => (c.id === causeId ? { ...c, images: c.images.filter((img) => img.id !== imageId) } : c))
+      );
+    }
+  }
+
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
       <div className="space-y-3">
         {causes.map((cause) => (
-          <div key={cause.id} className="flex items-center gap-4 rounded-2xl border border-stone-200 bg-white p-4">
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-stone-100">
-              <Image src={cause.imageUrl} alt={cause.title} fill sizes="64px" className="object-cover" />
+          <div key={cause.id} className="rounded-2xl border border-stone-200 bg-white p-4">
+            <div className="flex items-center gap-4">
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-stone-100">
+                <Image src={cause.imageUrl} alt={cause.title} fill sizes="64px" className="object-cover" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-stone-900">{cause.title}</p>
+                <p className="text-sm text-stone-500 line-clamp-1">{cause.description}</p>
+              </div>
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  cause.published ? "bg-emerald-100 text-emerald-700" : "bg-stone-100 text-stone-500"
+                }`}
+              >
+                {cause.published ? "Published" : "Hidden"}
+              </span>
+              {canEdit && (
+                <div className="flex gap-2 text-sm">
+                  <button onClick={() => togglePublished(cause)} className="text-stone-500 hover:text-teal-700">
+                    {cause.published ? "Hide" : "Show"}
+                  </button>
+                  <button onClick={() => startEdit(cause)} className="text-teal-700 hover:underline">
+                    Edit
+                  </button>
+                  <button onClick={() => handleDelete(cause.id)} className="text-red-600 hover:underline">
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="flex-1">
-              <p className="font-medium text-stone-900">{cause.title}</p>
-              <p className="text-sm text-stone-500 line-clamp-1">{cause.description}</p>
-            </div>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                cause.published ? "bg-emerald-100 text-emerald-700" : "bg-stone-100 text-stone-500"
-              }`}
-            >
-              {cause.published ? "Published" : "Hidden"}
-            </span>
-            {canEdit && (
-              <div className="flex gap-2 text-sm">
-                <button onClick={() => togglePublished(cause)} className="text-stone-500 hover:text-teal-700">
-                  {cause.published ? "Hide" : "Show"}
-                </button>
-                <button onClick={() => startEdit(cause)} className="text-teal-700 hover:underline">
-                  Edit
-                </button>
-                <button onClick={() => handleDelete(cause.id)} className="text-red-600 hover:underline">
-                  Delete
-                </button>
+
+            {(cause.images.length > 0 || canEdit) && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-stone-100 pt-3">
+                <span className="text-xs text-stone-400">Carousel photos:</span>
+                {cause.images.map((img) => (
+                  <div key={img.id} className="group relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-stone-200">
+                    <Image src={img.imageUrl} alt="" fill sizes="48px" className="object-cover" />
+                    {canEdit && (
+                      <button
+                        aria-label="Remove photo"
+                        onClick={() => handleDeleteImage(cause.id, img.id)}
+                        className="absolute inset-0 hidden items-center justify-center bg-black/50 text-white group-hover:flex"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {canEdit && (
+                  <label className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-dashed border-stone-300 text-lg text-stone-400 hover:border-teal-400 hover:text-teal-600">
+                    {uploadingFor === cause.id ? "…" : "+"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleAddImage(cause.id, e)}
+                      disabled={uploadingFor === cause.id}
+                    />
+                  </label>
+                )}
               </div>
             )}
           </div>

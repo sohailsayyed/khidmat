@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
-  const causes = await prisma.cause.findMany({ orderBy: { order: "asc" } });
+  const causes = await prisma.cause.findMany({
+    orderBy: { order: "asc" },
+    include: { images: { orderBy: { order: "asc" } } },
+  });
   return NextResponse.json(causes);
 }
 
@@ -29,6 +32,7 @@ export async function POST(req: NextRequest) {
       order: typeof body?.order === "number" ? body.order : 0,
       published: typeof body?.published === "boolean" ? body.published : true,
     },
+    include: { images: true },
   });
 
   return NextResponse.json(cause, { status: 201 });

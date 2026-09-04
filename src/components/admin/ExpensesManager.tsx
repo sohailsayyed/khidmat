@@ -363,11 +363,9 @@ export default function ExpensesManager({
             >
               {saving ? "Saving…" : editingId ? "Update expense" : "Add expense"}
             </button>
-            {editingId && (
-              <button type="button" onClick={resetForm} className="rounded-lg px-4 py-2 text-sm text-stone-500 hover:bg-stone-50">
-                Cancel
-              </button>
-            )}
+            <button type="button" onClick={resetForm} className="rounded-lg px-4 py-2 text-sm text-stone-500 hover:bg-stone-50">
+              {editingId ? "Cancel" : "Close"}
+            </button>
           </div>
         </form>
       )}

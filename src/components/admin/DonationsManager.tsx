@@ -456,11 +456,9 @@ export default function DonationsManager({ initialDonations }: { initialDonation
             >
               {saving ? "Saving…" : editingId ? "Update donation" : "Add donation"}
             </button>
-            {editingId && (
-              <button type="button" onClick={resetForm} className="text-sm text-stone-500 hover:underline">
-                Cancel
-              </button>
-            )}
+            <button type="button" onClick={resetForm} className="text-sm text-stone-500 hover:underline">
+              {editingId ? "Cancel" : "Close"}
+            </button>
             {!editingId && <p className="text-xs text-stone-400">Manual entries are recorded as Confirmed by default.</p>}
           </div>
         </form>

@@ -1,0 +1,9 @@
+-- CreateTable
+CREATE TABLE "CauseImage" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "causeId" TEXT NOT NULL,
+    "imageUrl" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "CauseImage_causeId_fkey" FOREIGN KEY ("causeId") REFERENCES "Cause" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);

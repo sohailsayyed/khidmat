@@ -1,7 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import type { GalleryImage } from "@prisma/client";
+import Lightbox from "@/components/Lightbox";
 
 export default function GallerySection({ images }: { images: GalleryImage[] }) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
   if (images.length === 0) return null;
 
   return (
@@ -13,19 +18,34 @@ export default function GallerySection({ images }: { images: GalleryImage[] }) {
         </div>
 
         <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {images.map((img) => (
-            <div key={img.id} className="relative aspect-square overflow-hidden rounded-xl bg-stone-200">
+          {images.map((img, i) => (
+            <button
+              key={img.id}
+              type="button"
+              onClick={() => setOpenIndex(i)}
+              className="relative aspect-square cursor-zoom-in overflow-hidden rounded-xl bg-stone-200"
+            >
               <Image
                 src={img.imageUrl}
                 alt={img.caption || "Khidmat gallery photo"}
                 fill
                 sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                className="object-cover"
+                className="object-cover transition hover:scale-105"
               />
-            </div>
+            </button>
           ))}
         </div>
       </div>
+
+      {openIndex !== null && (
+        <Lightbox
+          images={images.map((img) => img.imageUrl)}
+          index={openIndex}
+          alt={images[openIndex].caption || "Khidmat gallery photo"}
+          onClose={() => setOpenIndex(null)}
+          onNavigate={setOpenIndex}
+        />
+      )}
     </section>
   );
 }
