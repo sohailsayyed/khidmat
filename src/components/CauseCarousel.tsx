@@ -29,7 +29,7 @@ export default function CauseCarousel({ images, alt }: { images: string[]; alt: 
           alt={alt}
           fill
           sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-          className="object-cover"
+          className="object-contain"
         />
         {hasMultiple && (
           <>
