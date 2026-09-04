@@ -89,25 +89,28 @@ export default function CausesManager({ initialCauses }: { initialCauses: CauseW
   }
 
   async function handleAddImage(causeId: string, e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
     setUploadingFor(causeId);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed");
+      let nextOrder = causes.find((c) => c.id === causeId)?.images.length ?? 0;
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: formData });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed");
 
-      const cause = causes.find((c) => c.id === causeId);
-      const res = await fetch(`/api/admin/causes/${causeId}/images`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl: uploadData.url, order: cause?.images.length ?? 0 }),
-      });
-      const created = await res.json();
-      if (!res.ok) throw new Error(created.error);
-      setCauses((cs) => cs.map((c) => (c.id === causeId ? { ...c, images: [...c.images, created] } : c)));
+        const res = await fetch(`/api/admin/causes/${causeId}/images`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl: uploadData.url, order: nextOrder }),
+        });
+        const created = await res.json();
+        if (!res.ok) throw new Error(created.error);
+        nextOrder += 1;
+        setCauses((cs) => cs.map((c) => (c.id === causeId ? { ...c, images: [...c.images, created] } : c)));
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -185,6 +188,7 @@ export default function CausesManager({ initialCauses }: { initialCauses: CauseW
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       className="hidden"
                       onChange={(e) => handleAddImage(cause.id, e)}
                       disabled={uploadingFor === cause.id}

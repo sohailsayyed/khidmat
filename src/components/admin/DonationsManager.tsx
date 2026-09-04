@@ -300,12 +300,12 @@ export default function DonationsManager({ initialDonations }: { initialDonation
             <input ref={importInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
           </label>
         )}
-        {canEdit && (
+        {canEdit && !showForm && (
           <button
-            onClick={() => (showForm ? resetForm() : setShowForm(true))}
+            onClick={() => setShowForm(true)}
             className="ml-auto rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
           >
-            {showForm ? "Close" : "+ Add manual donation"}
+            + Add manual donation
           </button>
         )}
       </div>
